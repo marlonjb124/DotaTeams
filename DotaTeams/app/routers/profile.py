@@ -1,6 +1,4 @@
 
-import http.client
-import os
 from typing import Annotated
 from fastapi import APIRouter, HTTPException,Depends
 from database.database import SessionLocal, engine
@@ -22,26 +20,26 @@ profilerouter = APIRouter(prefix="/Profile",tags=["Perfiles"])
 
 
 
-@profilerouter.get("/GetBodyFat")
-async def getBF(user:Annotated[UserSchema,Depends(userController.get_current_active_user)],db: Session = Depends(get_db)):
-    try:
+# @profilerouter.get("/GetBodyFat")
+# async def getBF(user:Annotated[UserSchema,Depends(userController.get_current_active_user)],db: Session = Depends(get_db)):
+#     try:
 
-        user = UserModel(**user.model_dump())       
-        userModel =db.query(UserModel).filter(UserModel.id == user.id).first()
+#         user = UserModel(**user.model_dump())       
+#         userModel =db.query(UserModel).filter(UserModel.id == user.id).first()
         
-        print(userModel.profile.age)
+#         print(userModel.profile.age)
         
-        if userModel.profile is None:
-            raise HTTPException(status_code=400, detail="User profile does not exist")
-        edad= userModel.profile.age
-        Imc= userModel.profile.icm
-        sexo = userModel.profile.gender
-        Pmc =  (1.20*Imc) 
-        return Pmc
+#         if userModel.profile is None:
+#             raise HTTPException(status_code=400, detail="User profile does not exist")
+#         edad= userModel.profile.age
+#         Imc= userModel.profile.icm
+#         sexo = userModel.profile.gender
+#         Pmc =  (1.20*Imc) 
+#         return Pmc
 
-    except Exception as e:
-        # raise HTTPException(status_code=500, detail=str(e))
-        raise e
+#     except Exception as e:
+#         # raise HTTPException(status_code=500, detail=str(e))
+#         raise e
 
 
 @profilerouter.post("/updateProfile")

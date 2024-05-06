@@ -1,6 +1,6 @@
 from fastapi.responses import HTMLResponse
 from fastapi import APIRouter,Depends, HTTPException, status
-from datetime import datetime, timedelta, timezone
+from datetime import  timedelta
 from database.database import SessionLocal
 from sqlalchemy.orm import Session
 from models.user import User as UserModel
@@ -50,15 +50,13 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db)):
     
     db.add(userModel)
     db.commit()
-    print(userModel.id)
     profile = profileController.createPerfil(userModel.id)
-    
     db.refresh(userModel)
-    
+    print(userModel.id)
     db.add(profile)
     db.commit()
-    db.refresh(profile)
-    # return UserReturn(**userModel.__dict__)
+    # db.refresh(profile)
+    return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)
     
 @userRouter.post("/token")
 async def login_for_access_token(
