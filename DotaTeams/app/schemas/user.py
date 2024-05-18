@@ -1,16 +1,18 @@
 from pydantic import BaseModel,Field
-
+from schemas.rol import Rol
+from typing import List
 class UserBase(BaseModel):
     email: str
-
+    
 
 class UserCreate(UserBase):
     password: str
-
+    
 
 class User(UserBase):
     id: int
     is_active: bool
+    rol:List[Rol]=[]
     class Config:
         from_attributes = True
 

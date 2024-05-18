@@ -5,5 +5,5 @@ from database.database import Base
 class TournamentTeam(Base):
     __tablename__ = "tournament_teams"
 
-    tournament_id = Column(Integer, ForeignKey("tournaments.id"), primary_key=True)
-    team_id = Column(Integer, ForeignKey("teams.id"), primary_key=True)
+    tournament_id = Column(Integer, ForeignKey("tournaments.id",ondelete="CASCADE"), primary_key=True)
+    team_id = Column(Integer, ForeignKey("teams.id",ondelete="CASCADE"), primary_key=True)

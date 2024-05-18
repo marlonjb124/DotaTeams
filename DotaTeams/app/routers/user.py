@@ -9,6 +9,7 @@ from schemas.user import UserCreate
 from fastapi.security import  OAuth2PasswordRequestForm
 from controllers import userController 
 from controllers import profileController
+from models.user_rol import User_rol
 
 from schemas import user as userSchema
 
@@ -43,17 +44,21 @@ def home()->HTMLResponse:
 
 @userRouter.post("/addUser")
 async def add_user(user: UserCreate, db: Session = Depends(get_db)):
+    print("entre")
     passw = user.password
+   
     userModel = UserModel(**user.model_dump())
     userModel.password= userController.get_password_hash(passw)
     # print(userModel.password)
-    
     db.add(userModel)
     db.commit()
     profile = profileController.createPerfil(userModel.id)
     db.refresh(userModel)
     print(userModel.id)
     db.add(profile)
+    db.commit()
+    user_rol = User_rol(user_id=userModel.id)
+    db.add(user_rol)
     db.commit()
     # db.refresh(profile)
     return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)

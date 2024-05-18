@@ -45,6 +45,8 @@ def get_user(db: Session, email:str):
    
     current_user = db.query(UserModel).filter(UserModel.email == email).first()
     userSchemaDB = userSchema.User(**current_user.__dict__)
+    for rol in current_user.rol:
+        userSchemaDB.rol.append(rol)
     return userSchemaDB
  
 
@@ -103,3 +105,12 @@ def get_current_active_user(
     if current_user.is_active == False:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+def require_role(required_role:str):
+    def role_cheker(current_user:userSchema.User=Depends(get_current_user),db: Session = Depends(get_db)):
+        me:UserModel = db.query(UserModel).filter(UserModel.id == current_user.id).first()
+        roles =[]
+        print(me.rol)        
+        if required_role not in me.rol[0].rol:
+            raise HTTPException(status_code=403,detail="Operation not permitted")
+        return current_user
+    return role_cheker

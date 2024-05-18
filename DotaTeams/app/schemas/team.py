@@ -4,8 +4,8 @@ from schemas.user import User
 class TeamBase(BaseModel):
     name: str
 
-class TeamCreate(TeamBase):
-    creator_id: int
+# class TeamCreate(TeamBase):
+#     creator_id: int
 
 class Team(TeamBase):
     id: int

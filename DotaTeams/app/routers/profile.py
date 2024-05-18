@@ -42,11 +42,10 @@ profilerouter = APIRouter(prefix="/Profile",tags=["Perfiles"])
 #         raise e
 
 
-@profilerouter.post("/updateProfile")
+@profilerouter.put("/updateProfile")
 async def updateprofile(profile: Profile,user:Annotated[UserSchema,Depends(userController.get_current_active_user)], db: Session = Depends(get_db)):
-    userdb = UserModel(**user.model_dump())
-    
-    profileToUpdt = db.query(profileModel).filter(profileModel.user_id == userdb.id).first()
+    # userdb = UserModel(**user.model_dump(exclude="rol"))
+    profileToUpdt = db.query(profileModel).filter(profileModel.user_id == user.id).first()
     
     profilenew = profile.model_dump()
     for key, value in profilenew.items():
@@ -54,5 +53,5 @@ async def updateprofile(profile: Profile,user:Annotated[UserSchema,Depends(userC
     # db.add(profileToUpdt)
     db.commit()
     db.refresh(profileToUpdt)
-    # return ProfileReturn(**profileToUpdt.__dict__)
+    return ProfileReturn(**profileToUpdt.__dict__)
     

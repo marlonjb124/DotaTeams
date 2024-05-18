@@ -5,13 +5,13 @@ from schemas.team import Team
 class TournamentBase(BaseModel):
     name: str
 
-class TournamentCreate(TournamentBase):
-    creator_id: int
+# class TournamentCreate(TournamentBase):
+#     creator_id: int
 
 class Tournament(TournamentBase):
     id: int
     creator: User
-    teams: List[Team] = []
+    teams_in_t : List[Team] = []
 
     class Config:
         from_attributes = True
