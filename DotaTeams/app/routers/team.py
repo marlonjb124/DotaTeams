@@ -9,8 +9,13 @@ from models.user_team import User_team
 from schemas.user_team import Member
 from schemas.user import User
 from controllers.userController import require_role,get_current_active_user
+from schemas.invitacion import Invitacion,Invitacion_Response
+from models.invitacion import Invitacion as InvitacionModel
 import json
-
+from uuid import uuid4
+from controllers.teamController import add_user_to_team
+from datetime import datetime,timedelta
+from typing import Annotated
 
 
 teamRouter = APIRouter(prefix="/Team",tags=["Teams"])
@@ -50,27 +55,11 @@ async def create_team(team: TeamBase ,user:User=Depends(require_role("Admin")),d
         return JSONResponse(content=response,status_code=200)
     except Exception as e:
         raise e
-@teamRouter.post("/add_user_team",description="Agregar un miembro a un equipo",response_class= JSONResponse,)
-async def add_user_team(new_member:Member,db: Session = Depends(get_db)):
-    try:
-    
-        userteam= User_team(user_id= new_member.user_id,team_id=new_member.team_id)
-        db.add(userteam)
-        db.commit()
-        Kevin = db.query(UserModel).filter(UserModel.email=="kevin").first()
-        print(Kevin.teams_created)
-        for i in range(len(Kevin.teams)):           
-            print(Kevin.teams[i].id)
-
-        # relaciones = db.query(User_team).order_by(User_team.team_id).all()
-        miembros = db.query(User_team).filter(User_team.team_id==userteam.team_id).all()
-        members={"ids":[]}
-        for i in range(len(miembros)):
-            members["ids"].append(miembros[i].user_id)          
-        # serializable = json.loads(json.dumps(members["ids"],default=str))
-        return JSONResponse(content= {"members":members["ids"]})
-    except Exception as e:
-        raise e
+# @teamRouter.post("/add_user_team",description="Agregar un miembro a un equipo",response_class= JSONResponse,)
+# async def add_user_team(new_member:Member,db: Session = Depends(get_db)):
+#         members = await add_user_to_team(new_member=new_member,db=db)
+#         return JSONResponse(content= {"members":members["ids"]})
+   
     
 @teamRouter.delete("/delete_team/{team_id}",description="Delete a team")
 async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depends(get_current_active_user)):
@@ -82,23 +71,83 @@ async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depend
     else:  
         raise HTTPException(status_code=401)
           
-    
-    # print(teamModel.creator.email)
+    return JSONResponse(content="Deleted!",status_code=204)
 
+
+
+@teamRouter.post("/Invite_user",description="Invite a user to the team")
+async def invite_user(invitacion:Invitacion,db: Session =Depends(get_db)):
+    
+    token = str(uuid4())
+    link = f"https://127.0.0.1:8000/Team/Acept_invitacion/{token}"
+    invitacionModel =InvitacionModel(token=token,invited_user_id=invitacion.invited_user_id,team_id=invitacion.team_id)
+    db.add(invitacionModel)
+    db.commit()
+    Schemainvitacion = Invitacion_Response(token=invitacionModel.token,team_id=invitacionModel.team_id,invited_user_id=invitacionModel.invited_user_id)
+    dictInvitacion= Schemainvitacion.model_dump()
+    response_invitacion ={"Invitacion": dictInvitacion,"link":link}
+    
+    return JSONResponse(content=response_invitacion,status_code=200)
+
+
+
+    # print(teamModel.creator.email)
+@teamRouter.post("/Acept_invitacion/{token}")
+async def Acept_invitacion(token:str,db:Session =Depends(get_db)):
+    invitacion = db.query(InvitacionModel).filter_by(token=token).first()
+    now = datetime.now()
+    token_time = invitacion.expToken + timedelta(minutes=2)
+    print(invitacion.expToken)
+    print(token_time)
+    bool_token = token_time > now
+    print(now)
+    print(bool_token)
+    # Si el token es válido y la invitación está pendiente
+    if invitacion and invitacion.status == "pendiente" and bool_token:
+        # Añade al usuario al equipo
+        members = await add_user_to_team(new_member=Member(user_id=invitacion.invited_user_id,team_id=invitacion.team_id),db=db)
+        invitacion.status = "Aceptada"
+        db.commit()
+        return JSONResponse(content={"Members":members["ids"],"Message": "Joined"},status_code=201)
+    else:
+        raise HTTPException(status_code=404, detail="Invitación no válida o expirada")
+@teamRouter.delete("/Acept_invitacion/{id_team}{tarjet_member_id}")
+async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[UserModel, Depends(get_current_active_user)],db:Session = Depends(get_db)):
+    try:
+        user_model:UserModel = db.query(UserModel).filter(UserModel.id == user.id).first()
+        print(user_model.teams_created)
+        for team in user_model.teams_created:
+            print(team.id)
+            if id_team  == team.id:
+                userteam= db.query(User_team).filter(User_team.team_id==id_team).first()
+                if not userteam:
+                    return JSONResponse(content={"Info": f"No se ha encontrado eel usuario  {tarjet_member_id} en el equipo  {id_team}"})
+                db.delete(userteam)
+                db.commit()
+                return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"})
+        raise HTTPException(status_code=430,detail="Operation not permitted,Not enough permissions(should be a team manager)")   
+    except Exception as e:
+        raise e
+        
+    
+    userteam= User_team(user_id= user.id,team_id=id_team).first()
+    db.delete(userteam)
+    db.commit()
+    return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"})
     # passw = user.password
-    # userModel = UserModel(**user.model_dump())
-    # userModel.password= userController.get_password_hash(passw)
-    # # print(userModel.password)
+    # UserModel = UserModel(**user.model_dump())
+    # UserModel.password= userController.get_password_hash(passw)
+    # # print(UserModel.password)
     
-    # db.add(userModel)
+    # db.add(UserModel)
     # db.commit()
-    # print(userModel.id)
-    # profile = profileController.createPerfil(userModel.id)
+    # print(UserModel.id)
+    # profile = profileController.createPerfil(UserModel.id)
     
-    # db.refresh(userModel)
+    # db.refresh(UserModel)
     
     # db.add(profile)
     # db.commit()
     # db.refresh(profile)
-    # return userSchema(**userModel.__dict__)
+    # return userSchema(**UserModel.__dict__)
     

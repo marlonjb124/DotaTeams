@@ -60,6 +60,7 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db)):
     user_rol = User_rol(user_id=userModel.id)
     db.add(user_rol)
     db.commit()
+    
     # db.refresh(profile)
     return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)
     

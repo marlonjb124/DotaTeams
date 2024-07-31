@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String,Float, UniqueConstraint
+from sqlalchemy import  ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column,Mapped
 from database.database import Base
@@ -8,9 +8,9 @@ class Profile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     nickname: Mapped[str] = mapped_column(String,nullable=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id",ondelete="cascade"))
     user: Mapped["User"] = relationship("User", back_populates="profile", uselist=False)
-    __table_args__ = (UniqueConstraint("user_id"),)
+    
 
 
 # event.listen(Profile, 'before_update', Profile.calculate_icm_and_bodyfat)

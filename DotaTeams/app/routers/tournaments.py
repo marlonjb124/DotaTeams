@@ -21,13 +21,13 @@ def get_db():
 tournament_router = APIRouter(prefix="/Tournaments",tags=["Tournaments"])
 @tournament_router.post("/CreateTournament")
 async def create_tournament(current_user: Annotated[UserSchema, Depends(userController.require_role("Admin"))],tournamentShema : TournamentBase,db:Session = Depends(get_db)):
-    userM =UserModel(**current_user.model_dump(exclude="rol"))
-    newT = Tournament(name=tournamentShema.name,creator_id =userM.id)
+    # userM =UserModel(**current_user.model_dump(exclude="rol"))
+    newT = Tournament(name=tournamentShema.name,creator_id =current_user.id)
     db.add(newT)
     db.commit()
     db.refresh(newT)
     return TournamentBase(**newT.__dict__)
-@tournament_router.post("/add_Team_Tournament/{tournament_id}")
+@tournament_router.post("/add_Team_Tournament/{tournament_id}",response_description="Team_in_T")
 async def add_team_tournament(team_tournament:Team_in_T,user:UserSchema = Depends(userController.require_role("Admin")),db:Session=Depends(get_db)):
     # user_model= db.query(UserModel).filter(UserModel.id == user.id)
     tournament = db.query(Tournament).filter(Tournament.id == team_tournament.tournament_id).first()
@@ -35,6 +35,6 @@ async def add_team_tournament(team_tournament:Team_in_T,user:UserSchema = Depend
     db.add(tournament_team_model)
     db.commit()
     db.refresh(tournament_team_model)
+    response = {"Teams_in":tournament.teams_in_t,"Tournament_id":tournament_team_model.tournament_id}
     
-    
-    return tournament.teams_in_t, Team_in_T(**tournament_team_model.__dict__)
+    return response

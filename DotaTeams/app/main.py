@@ -1,4 +1,4 @@
-import uvicorn
+# import uvicorn
 from database.database import Base,engine
 from fastapi import FastAPI
 from routers.profile import profilerouter
