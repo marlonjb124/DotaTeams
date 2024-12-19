@@ -12,7 +12,7 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
-    rol:List[str]=["Client"]
+    rol:List[Rol]=[]
     class Config:
         from_attributes = True
 

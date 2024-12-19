@@ -15,3 +15,7 @@ class Tournament(TournamentBase):
 
     class Config:
         from_attributes = True
+class TournamentUpdate(TournamentBase):
+    id:int
+    name:str|None=None
+    

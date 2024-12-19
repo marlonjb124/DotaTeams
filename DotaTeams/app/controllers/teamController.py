@@ -20,19 +20,22 @@ async def add_user_to_team(new_member:Member,db: Session = Depends(get_db)):
         userteam= User_team(user_id= new_member.user_id,team_id=new_member.team_id)
         db.add(userteam)
         db.commit()
+        team_search = db.query(team.Team).filter(team.Team.id==userteam.team_id).first()
+        print(team_search.members)
         # Kevin = db.query(UserModel).filter(UserModel.email=="kevin").first()
         # print(Kevin.teams_created)
         # for i in range(len(Kevin.teams)):           
         #     print(Kevin.teams[i].id)
 
         # relaciones = db.query(User_team).order_by(User_team.team_id).all()
-        miembros = db.query(User_team).filter(User_team.team_id==userteam.team_id).all()
-        members={"ids":[]}
-        for i in range(len(miembros)):
-            members["ids"].append(miembros[i].user_id)          
+
+        # miembros = db.query(User_team).filter(User_team.team_id==userteam.team_id).all()
+        # members={"ids":[]}
+        # for i in range(len(miembros)):
+        #     members["ids"].append(miembros[i].user_id)          
         # serializable = json.loads(json.dumps(members["ids"],default=str))
         # return JSONResponse(content= {"members":members["ids"]})
-        return members
+        return team_search.members
     except Exception as e:
         raise e
     current_user: Annotated[UserSchema, Depends(userController.require_role("Admin"))]

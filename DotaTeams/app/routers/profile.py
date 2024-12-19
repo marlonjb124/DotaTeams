@@ -16,7 +16,7 @@ def get_db():
     finally:
         db.close()
 
-profilerouter = APIRouter(prefix="/Profile",tags=["Perfiles"])
+profilerouter = APIRouter(prefix="/Profile",tags=["Profiles"])
 
 
 

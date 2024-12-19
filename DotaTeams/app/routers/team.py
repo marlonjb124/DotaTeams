@@ -1,9 +1,10 @@
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter,Depends, HTTPException, status
 from database.database import SessionLocal
 from sqlalchemy.orm import Session
 from models.user import User as UserModel
-from schemas.team import TeamBase,Team as TeamSchema
+from schemas.team import TeamUpdateSchema,TeamBase,Team as TeamSchema
 from models.team  import Team
 from models.user_team import User_team
 from schemas.user_team import Member
@@ -26,7 +27,7 @@ def get_db():
     finally:
         db.close()
 @teamRouter.post("/create_team")
-async def create_team(team: TeamBase ,user:User=Depends(require_role("Admin")),db: Session = Depends(get_db)):
+async def create_team(team: TeamBase ,user:User=Depends(require_role("Client")),db: Session = Depends(get_db)):
     try:
         # Player =UserModel(email="Daniel",password="1248")
         teamModel =Team(**team.model_dump())
@@ -39,16 +40,7 @@ async def create_team(team: TeamBase ,user:User=Depends(require_role("Admin")),d
         print(userteam)
         db.add(userteam)
         db.commit()
-        # usuarios = teamModel.members
-        # for usuario in usuarios:
-        #     print(usuario.email)
-        # def get_all_pdcts():
-        # myCursor =get_all_pdctsDB()
-        # print(myCursor)
-        # result=list(myCursor)
-        # serializables = json.loads(json.dumps(result,default=str))
-        # return serializables
-        team_schema = TeamSchema(name=teamModel.name,creator=user,id=teamModel.id,members=[user])
+        team_schema = TeamSchema(name=teamModel.name,creator=user,id=teamModel.id,members=[])
         serializable = team_schema.model_dump()
         print(serializable)
         response = {"Team": serializable}
@@ -76,8 +68,7 @@ async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depend
 
 
 @teamRouter.post("/Invite_user",description="Invite a user to the team")
-async def invite_user(invitacion:Invitacion,db: Session =Depends(get_db)):
-    
+async def invite_user(invitacion:Invitacion,db: Session =Depends(get_db)):   
     token = str(uuid4())
     link = f"https://127.0.0.1:8000/Team/Acept_invitacion/{token}"
     invitacionModel =InvitacionModel(token=token,invited_user_id=invitacion.invited_user_id,team_id=invitacion.team_id)
@@ -96,7 +87,7 @@ async def invite_user(invitacion:Invitacion,db: Session =Depends(get_db)):
 async def Acept_invitacion(token:str,db:Session =Depends(get_db)):
     invitacion = db.query(InvitacionModel).filter_by(token=token).first()
     now = datetime.now()
-    token_time = invitacion.expToken + timedelta(minutes=2)
+    token_time = invitacion.expToken + timedelta(minutes=10)
     print(invitacion.expToken)
     print(token_time)
     bool_token = token_time > now
@@ -106,34 +97,82 @@ async def Acept_invitacion(token:str,db:Session =Depends(get_db)):
     if invitacion and invitacion.status == "pendiente" and bool_token:
         # Añade al usuario al equipo
         members = await add_user_to_team(new_member=Member(user_id=invitacion.invited_user_id,team_id=invitacion.team_id),db=db)
+        dict=[]
+        for member in members:
+            member_serialized = User(**member.__dict__)
+            member_serialized = member_serialized.model_dump()
+            dict.append(member_serialized)
+        # members_serialized = [User(**member.__dict__)for member in members]
+        print(member_serialized)
         invitacion.status = "Aceptada"
         db.commit()
-        return JSONResponse(content={"Members":members["ids"],"Message": "Joined"},status_code=201)
+        return JSONResponse(content={"Members":dict},status_code=201)
     else:
         raise HTTPException(status_code=404, detail="Invitación no válida o expirada")
-@teamRouter.delete("/Acept_invitacion/{id_team}{tarjet_member_id}")
-async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[UserModel, Depends(get_current_active_user)],db:Session = Depends(get_db)):
+    
+@teamRouter.delete("/drop_user_from_team/{id_team}/{tarjet_member_id}")
+async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[User, Depends(require_role("Admin"))],db:Session = Depends(get_db)):
     try:
         user_model:UserModel = db.query(UserModel).filter(UserModel.id == user.id).first()
         print(user_model.teams_created)
         for team in user_model.teams_created:
-            print(team.id)
-            if id_team  == team.id:
-                userteam= db.query(User_team).filter(User_team.team_id==id_team).first()
+            if id_team == team.id:
+                userteam= db.query(User_team).filter(User_team.user_id==tarjet_member_id).first()
+                print(userteam)
                 if not userteam:
-                    return JSONResponse(content={"Info": f"No se ha encontrado eel usuario  {tarjet_member_id} en el equipo  {id_team}"})
+                    return JSONResponse(content={"Info": f"No se ha encontrado el usuario  {tarjet_member_id} en el equipo  {id_team}"})
                 db.delete(userteam)
                 db.commit()
                 return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"})
-        raise HTTPException(status_code=430,detail="Operation not permitted,Not enough permissions(should be a team manager)")   
+        # raise HTTPException(status_code=430,detail="Operation not permitted,Not enough permissions(should be a team manager)")   
     except Exception as e:
         raise e
-        
+@teamRouter.get("/Get_Teams")
+async def get_teams(user:User=Depends(get_current_active_user),db:Session=Depends(get_db)):
+    teams = db.query(Team).all()
+    print(teams)
+    team_schema = [
+        {
+            "Team": TeamSchema(**team.__dict__).model_dump(),
+            "Tournaments_in": jsonable_encoder(team.tournaments)
+        }
+        for team in teams
+    ]
+    # print(type(team_schema[0]["Team"]))
+    # print(team_schema[0]["Tournaments_in"])
+    # return team_schema
+    return JSONResponse(content={"Teams":team_schema},status_code=200)
+    # return team_schema
     
-    userteam= User_team(user_id= user.id,team_id=id_team).first()
-    db.delete(userteam)
+@teamRouter.patch("/update_team")
+async def update_team(teamSchema:TeamUpdateSchema,user:User=Depends(require_role("Admin")),db:Session =Depends(get_db)):
+
+    team_to_update=db.get(Team,teamSchema.id)
+    # tournaments = getattr(team_to_update,"tournaments")
+    # print('23232',tournaments)
+    if not team_to_update:
+        raise HTTPException(detail="No se ha encontrado el equipo a actualizar",status_code=404)
+    team_data=teamSchema.model_dump(exclude_unset=True)
+    for key, value in team_data.items():
+        setattr(team_to_update, key, value)
+        
     db.commit()
-    return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"})
+    db.refresh(team_to_update)
+    # dicted= team_to_update.__dict__
+    response_team = TeamSchema.model_validate(team_to_update)
+    # response_team = TeamSchema(**team_to_update.__dict__)
+    # print(dicted)
+    print(response_team)
+    return JSONResponse(content=response_team.model_dump(),status_code=200)
+    
+    
+    
+    
+    
+    # userteam= User_team(user_id= user.id,team_id=id_team).first()
+    # db.delete(userteam)
+    # db.commit()
+    # return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"})
     # passw = user.password
     # UserModel = UserModel(**user.model_dump())
     # UserModel.password= userController.get_password_hash(passw)

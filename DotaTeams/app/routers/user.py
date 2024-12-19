@@ -1,10 +1,15 @@
-from fastapi.responses import HTMLResponse
+from typing import Annotated
+from sqlalchemy.exc import IntegrityError
+# import sqlalchemy.exc
+from fastapi.responses import HTMLResponse,JSONResponse
 from fastapi import APIRouter,Depends, HTTPException, status
 from datetime import  timedelta
 from database.database import SessionLocal
 from sqlalchemy.orm import Session
+from models.rol import Rol
 from models.user import User as UserModel
-from typing import Annotated
+from models.user_rol import User_rol
+from schemas.user_roles import User_rol as User_rol_schema
 from schemas.user import UserCreate
 from fastapi.security import  OAuth2PasswordRequestForm
 from controllers import userController 
@@ -16,7 +21,7 @@ from schemas import user as userSchema
 
             
 
-userRouter = APIRouter(prefix="/User",tags=["usuarios"])
+userRouter = APIRouter(prefix="/User",tags=["Users"])
 def get_db():
     db = SessionLocal()
     try:
@@ -60,9 +65,10 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db)):
     user_rol = User_rol(user_id=userModel.id)
     db.add(user_rol)
     db.commit()
-    
+    db.refresh(userModel)
     # db.refresh(profile)
-    return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)
+    # return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)
+    return userSchema.User(**userModel.__dict__)
     
 @userRouter.post("/token")
 async def login_for_access_token(
@@ -90,7 +96,23 @@ def read_users_me(
 ):
    
     return current_user
+@userRouter.post("/Assign_role")
+async def assign_role(user_rol:User_rol_schema,current_user:userSchema.User =Depends(userController.require_role("Admin")),db:Session=Depends(get_db)):
+    
+    rol_user = User_rol(**user_rol.model_dump())
+    try:
+        db.add(rol_user)
+        rol = db.get(Rol,user_rol.rol_id)   
+        name =rol.rol
+        db.commit()  
+    except IntegrityError :   
 
+        raise HTTPException(detail=f"El usuario ya posee el rol de {name}",status_code=400)
+    db.refresh(rol_user)
+    print(rol_user)
+    return JSONResponse(content="Successfull",status_code=200)
+
+    
 
 # @userRouter.get("/users/me/items/")
 # async def read_own_items(

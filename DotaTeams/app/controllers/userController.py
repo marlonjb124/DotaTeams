@@ -44,10 +44,23 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def get_user(db: Session, email:str):
    
     current_user = db.query(UserModel).filter(UserModel.email == email).first()
+    # print("current")
+    # dict_user=current_user.__dict__
+    # to_schema={}
+    # for k,v in dict_user.items() :
+    #     if k!="rol":
+    #         to_schema[f"{k}"]= v
+    # for rol in current_user.rol:
+    #     rol_dict = rol.__dict__
+    #     print(current_user.__dict__)
+    #     print(rol_dict)
+    #     print("sad")
+    
     userSchemaDB = userSchema.User(**current_user.__dict__)
-    for rol in current_user.rol:
-        userSchemaDB.rol.append(rol.rol)
-        print(rol.rol)
+    print(userSchemaDB)
+    # print(userSchemaDB.rol)
+
+    #     print(rol.rol)
     return userSchemaDB
  
 
@@ -95,7 +108,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],db: Session =
     user = get_user(db, email = user_name.username)
     if user is None:
         raise credentials_exception
-    print(user)
+    print(user.rol)
     return user
 
 
@@ -106,12 +119,15 @@ def get_current_active_user(
     if current_user.is_active == False:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
 def require_role(required_role:str):
-    def role_cheker(current_user:userSchema.User=Depends(get_current_user),db: Session = Depends(get_db)):
+    def role_cheker(current_user:userSchema.User=Depends(get_current_active_user),db: Session = Depends(get_db)):
         # me:UserModel = db.query(UserModel).filter(UserModel.id == current_user.id).first()
         # roles =[]
-        # print(me.rol)        
-        if required_role not in current_user.rol:
+        # print(me.rol)    
+        roles = [rol.rol for rol in current_user.rol]    
+        print(roles)
+        if required_role not in roles:
             raise HTTPException(status_code=403,detail="Operation not permitted,Not enough permissions")
         return current_user
     return role_cheker
