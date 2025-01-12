@@ -5,3 +5,7 @@ class Rol(BaseModel):
     id:int
     class Config:
         from_attributes = True
+class Rol_create(BaseModel):
+    rol:str
+    class Config:
+        from_attributes = True

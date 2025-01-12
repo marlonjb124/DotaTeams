@@ -27,7 +27,7 @@ def get_db():
     finally:
         db.close()
 @teamRouter.post("/create_team")
-async def create_team(team: TeamBase ,user:User=Depends(require_role("Client")),db: Session = Depends(get_db)):
+async def create_team(team: TeamBase ,user:User=Depends(require_role("Admin")),db: Session = Depends(get_db)):
     try:
         # Player =UserModel(email="Daniel",password="1248")
         teamModel =Team(**team.model_dump())

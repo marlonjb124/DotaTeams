@@ -132,7 +132,9 @@ def require_role(required_role:str):
         # print(me.rol)    
         roles = [rol.rol for rol in current_user.rol]    
         print(roles)
+        if "Super_admin" in roles and current_user.email=="Super_admin":
+            return current_user
         if required_role not in roles:
-            raise HTTPException(status_code=403,detail="Operation not permitted,Not enough permissions")
+            raise HTTPException(status_code=403,detail="Operation not permitted,Not enough permissions")     
         return current_user
     return role_cheker

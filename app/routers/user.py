@@ -11,6 +11,7 @@ from models.user import User as UserModel
 from models.user_rol import User_rol
 from schemas.user_roles import User_rol as User_rol_schema
 from schemas.user import UserCreate
+from schemas.rol import Rol_create as rol_create_schema
 from fastapi.security import  OAuth2PasswordRequestForm
 from controllers import userController 
 from controllers import profileController
@@ -44,15 +45,21 @@ def home()->HTMLResponse:
 
     return HTMLResponse(content=html, status_code=200)
 
+@userRouter.post("/Create_rol")
+async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userController.require_role("just to know Super_admin")),db:Session=Depends(get_db)):
+    rol_model = Rol(**rol.model_dump())
+    db.add(rol_model)
+    db.commit()
+    db.refresh(rol_model)
+    return rol_model
 
 
-
-@userRouter.post("/addUser")
-async def add_user(user: UserCreate, db: Session = Depends(get_db)):
+@userRouter.post("/Add_user")
+async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSchema=Depends(userController.require_role("Admin"))):
     print("entre")
     passw = user.password
    
-    userModel = UserModel(**user.model_dump())
+    userModel = UserModel(**user.model_dump(exclude={"rol"}))
     userModel.password= userController.get_password_hash(passw)
     # print(userModel.password)
     db.add(userModel)
@@ -62,7 +69,11 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db)):
     print(userModel.id)
     db.add(profile)
     db.commit()
-    user_rol = User_rol(user_id=userModel.id)
+    
+    rol_guest= db.query(Rol).filter(Rol.rol == user.rol[0].rol).first()
+    print(rol_guest.id)
+    print("id_rol_guest")
+    user_rol = User_rol(user_id=userModel.id,rol_id=rol_guest.id)
     db.add(user_rol)
     db.commit()
     db.refresh(userModel)

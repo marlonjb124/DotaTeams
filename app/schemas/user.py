@@ -1,5 +1,5 @@
 from pydantic import BaseModel,Field
-from schemas.rol import Rol
+from schemas.rol import Rol,Rol_create
 from typing import List
 class UserBase(BaseModel):
     email: str
@@ -7,6 +7,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    rol:List[Rol_create]=[Rol_create(rol="Guest")]
     
 
 class User(UserBase):
