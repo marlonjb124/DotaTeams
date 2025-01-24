@@ -1,0 +1,31 @@
+name: Run Database Migrations
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Log in to AWS ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build Docker image
+      run: |
+        docker build -t my-app:latest .
+        docker tag my-app:latest <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/my-app:latest
+
+    - name: Push Docker image to ECR
+      run: |
+        docker push <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/my-app:latest
+
+    - name: Run migrations
+      run: |
+        docker run \
+          -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
+          <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/my-app:latest \
+          python migrate.py migrate

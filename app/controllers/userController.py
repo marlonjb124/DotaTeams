@@ -91,6 +91,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
+    
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -109,7 +110,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
         user_name = userSchema.TokenData(username=username)
     except jwt.ExpiredSignatureError:
         raise credentials_exception
-    except jwt.JWTError:
+    except jwt.InvalidTokenError:
         raise credentials_exception
     user = get_user(db, email=user_name.username)
     if user is None:
@@ -127,9 +128,7 @@ def get_current_active_user(
 
 def require_role(required_role:str):
     def role_cheker(current_user:userSchema.User=Depends(get_current_active_user),db: Session = Depends(get_db)):
-        # me:UserModel = db.query(UserModel).filter(UserModel.id == current_user.id).first()
-        # roles =[]
-        # print(me.rol)    
+
         roles = [rol.rol for rol in current_user.rol]    
         print(roles)
         if "Super_admin" in roles and current_user.email=="Super_admin":
