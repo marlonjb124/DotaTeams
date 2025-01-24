@@ -16,16 +16,16 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t my-app:latest .
-        docker tag my-app:latest <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/my-app:latest
+        docker build -t fastapi-app . 
+        docker tag fastapi-app:latest 920373015494.dkr.ecr.us-east-2.amazonaws.com/fastapi-app:latest
 
     - name: Push Docker image to ECR
       run: |
-        docker push <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/my-app:latest
+        docker push 920373015494.dkr.ecr.us-east-2.amazonaws.com/fastapi-app:latest
 
     - name: Run migrations
       run: |
         docker run \
           -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
-          <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/my-app:latest \
-          python migrate.py migrate
+          920373015494.dkr.ecr.us-east-2.amazonaws.com/fastapi-app:latest \
+          alembic upgrade head
