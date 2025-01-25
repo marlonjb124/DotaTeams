@@ -2,5 +2,5 @@
   run: |
     docker run \
       -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
-      920373015494.dkr.ecr.us-east-2.amazonaws.com/migrations:latest
+      database-1.cbsk28yuwy1o.us-east-2.rds.amazonaws.com
 
