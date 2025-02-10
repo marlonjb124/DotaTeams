@@ -4,17 +4,17 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException,Depends
 from fastapi.responses import JSONResponse,Response
 import sqlalchemy.exc
-from database.database import SessionLocal
+from ..database.database import SessionLocal
 from sqlalchemy.orm import Session
-from models.user import User as UserModel
-from schemas.user import User as UserSchema
-from controllers import userController
-from models.tournaments import Tournament as TournamentModel
-from models.tournaments_teams import TournamentTeam
-from models.team import Team as Team_Model
-from schemas.tournament import TournamentBase,Tournament,TournamentUpdate
-from schemas.team import Team,TeamBase 
-from schemas.team_tournament import Team_in_T
+from ..models.user import User as UserModel
+from ..schemas.user_team import User as UserSchema
+from ..controllers import userController
+from ..models.tournaments import Tournament as TournamentModel
+from ..models.tournaments_teams import TournamentTeam
+from ..models.team import Team as Team_Model
+from ..schemas.tournament import TournamentBase,Tournament,TournamentUpdate
+from ..schemas.user_team import Team,TeamBase 
+from ..schemas.team_tournament import Team_in_T
 def get_db():
     db = SessionLocal()
     try:

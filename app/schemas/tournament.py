@@ -1,10 +1,11 @@
 from typing import List
 from pydantic import BaseModel
-from schemas.user import User
-from schemas.team import Team
+from ..schemas.user_team import User
+from ..schemas.user_team import Team
 class TournamentBase(BaseModel):
     name: str
-
+    class Config:
+        from_attributes = True
 # class TournamentCreate(TournamentBase):
 #     creator_id: int
 

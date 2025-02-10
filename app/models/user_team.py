@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String,Float, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column,Mapped
-from database.database import Base
+from ..database.database import Base
 
 class User_team(Base):
     __tablename__ = "team_members"

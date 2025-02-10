@@ -1,12 +1,12 @@
-from schemas.user_team import Member
-from models.user_team import User_team
-from models import team,user as userModel
-from database.database import SessionLocal
+from ..schemas.user_team import Member
+from ..models.user_team import User_team
+from ..models import team,user as userModel
+from ..database.database import SessionLocal
 from sqlalchemy.orm import Session
 from fastapi import Depends,HTTPException
 from typing import Annotated
-from schemas import user
-from controllers import userController
+from ..schemas import user_team
+from ..controllers import userController
 # from fastapi.responses import JSONResponse
 def get_db():
     db = SessionLocal()

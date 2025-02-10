@@ -1,20 +1,21 @@
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter,Depends, HTTPException, status
-from database.database import SessionLocal
+from typing import List, ForwardRef
+from ..database.database import SessionLocal
 from sqlalchemy.orm import Session
-from models.user import User as UserModel
-from schemas.team import TeamUpdateSchema,TeamBase,Team as TeamSchema
-from models.team  import Team
-from models.user_team import User_team
-from schemas.user_team import Member
-from schemas.user import User
-from controllers.userController import require_role,get_current_active_user
-from schemas.invitacion import Invitacion,Invitacion_Response
-from models.invitacion import Invitacion as InvitacionModel
+from ..models.user import User as UserModel
+from ..schemas.user_team import TeamUpdateSchema,TeamBase,Team as TeamSchema
+from ..models.team  import Team
+from ..models.user_team import User_team
+from ..schemas.user_team import Member
+from ..schemas.user_team import User
+from ..controllers.userController import require_role,get_current_active_user
+from ..schemas.invitacion import Invitacion,Invitacion_Response
+from ..models.invitacion import Invitacion as InvitacionModel
 import json
 from uuid import uuid4
-from controllers.teamController import add_user_to_team
+from ..controllers.teamController import add_user_to_team
 from datetime import datetime,timedelta
 from typing import Annotated
 

@@ -1,9 +1,9 @@
 from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.orm import relationship,mapped_column,Mapped
-from database.database import Base
-from models.rol import Rol
-from models.user_rol import User_rol
-from models.invitacion import Invitacion
+from ..database.database import Base
+from ..models.rol import Rol
+from ..models.user_rol import User_rol
+from ..models.invitacion import Invitacion
 
 class User(Base):
     __tablename__ = "users"
