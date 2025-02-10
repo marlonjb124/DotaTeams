@@ -127,9 +127,7 @@ def get_current_active_user(
 
 def require_role(required_role:str):
     def role_cheker(current_user:userSchema.User=Depends(get_current_active_user),db: Session = Depends(get_db)):
-        # me:UserModel = db.query(UserModel).filter(UserModel.id == current_user.id).first()
-        # roles =[]
-        # print(me.rol)    
+
         roles = [rol.rol for rol in current_user.rol]    
         print(roles)
         if "Super_admin" in roles and current_user.email=="Super_admin":

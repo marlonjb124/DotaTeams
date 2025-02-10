@@ -7,11 +7,11 @@ services:
       dockerfile: Dockerfile
     container_name: fastapi-app
     ports:
-      - "8080:80"  # Exponer el puerto 80 del contenedor en el puerto 8080 de tu máquina
+      - "8080:8080"  # Exponer el puerto 8080 para pruebas locales
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-fastapi-test.cbsk28yuwy1o.us-east-2.rds.amazonaws.com:5432/postgres-fastapi-test
     depends_on:
       - db
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/basedato
     networks:
       - mynetwork
 
