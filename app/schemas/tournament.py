@@ -20,3 +20,7 @@ class TournamentUpdate(TournamentBase):
     id:int
     name:str|None=None
     
+class TournamentPublicComplete(TournamentBase):
+    id: int
+    creator: User
+    teams_in_t : List[Team] = []

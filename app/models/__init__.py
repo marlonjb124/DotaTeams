@@ -1,11 +1,11 @@
-from models.user import User
-from models.rol import Rol
-from models.user_rol import User_rol
-from models.invitacion import Invitacion
-from models.profile import Profile
-from models.team import Team
-from models.tournaments import Tournament
-from models.tournaments_teams import TournamentTeam
-from models.user_team import User_team
+from .user import User
+from .rol import Rol
+from .user_rol import User_rol
+from .invitacion import Invitacion
+from .profile import Profile
+from .team import Team
+from .tournaments import Tournament
+from .tournaments_teams import TournamentTeam
+from .user_team import User_team
 
 __all__ = ["User", "Rol", "User_rol", "Invitacion","Profile","Team","TournamentTeam","Tournament","User_team"]

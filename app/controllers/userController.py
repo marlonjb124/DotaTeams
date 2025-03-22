@@ -102,7 +102,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # PyJWT también soporta una lista de algoritmos
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception       

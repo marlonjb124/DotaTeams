@@ -1,8 +1,10 @@
 from typing import List
 from pydantic import BaseModel
 from ..schemas.rol import Rol,Rol_create
+# from typing import type_check_only
 
-
+# if type_check_only:
+#     from ..schemas.tournament
 class UserBase(BaseModel):
     email: str
     class Config:
@@ -27,6 +29,7 @@ class Team(TeamBase):
     description:str|None = None
     creator: User
     members: List[User] = []  
+
 class UserReturn(User):
     teams:list[Team] = []
     teams_created:list[Team] = []

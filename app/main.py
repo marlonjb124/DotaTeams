@@ -1,5 +1,6 @@
 # import uvicorn
 # from database.database import Base,engine
+
 from fastapi import FastAPI
 from .routers.profile import profilerouter
 from .routers.user import userRouter
@@ -17,5 +18,5 @@ app.include_router(tournament_router)
 # handler = Mangum(app)
 # Base.metadata.create_all(bind=engine)
 
-# if __name__=="__main__" :
-#     uvicorn.run("main:app", port=8000, log_level="info")
+if __name__=="__main__" :
+    uvicorn.run("app.main:app", port=8000, log_level="info")
