@@ -24,15 +24,18 @@ class User(UserBase):
         from_attributes = True
 class TeamBase(BaseModel):
     name: str
-class Team(TeamBase):
     id: int
     description:str|None = None
+class Team(TeamBase):
     creator: User
     members: List[User] = []  
+    
+class TeamSimple(TeamBase):
+    pass
 
 class UserReturn(User):
-    teams:list[Team] = []
-    teams_created:list[Team] = []
+    teams:list[TeamBase] = []
+    teams_created:list[TeamBase] = []
     # profile:ProfileReturn
 class Member(BaseModel):
     user_id: int

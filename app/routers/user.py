@@ -58,9 +58,7 @@ async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userControlle
 
 @userRouter.post("/Add_user")
 async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSchema=Depends(userController.require_role("Admin"))):
-    print("entre")
     passw = user.password
-   
     userModel = UserModel(**user.model_dump(exclude={"rol"}))
     userModel.password= userController.get_password_hash(passw)
     # print(userModel.password)
@@ -68,10 +66,8 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSche
     db.commit()
     profile = profileController.createPerfil(userModel.id)
     db.refresh(userModel)
-    print(userModel.id)
     db.add(profile)
     db.commit()
-    
     rol_guest= db.query(Rol).filter(Rol.rol == user.rol[0].rol).first()
     print(rol_guest.id)
     print("id_rol_guest")
@@ -137,7 +133,7 @@ async def get_roles(db:Session=Depends(get_db)):
     roles=db.query(Rol).all()
     return roles
 
-@userRouter.get("/{user_id}") 
+@userRouter.get("/{user_id}", response_model=UserReturn) 
 async def find_user(user_id: int, db: Session = Depends(get_db)):
     db_user = db.get(UserModel, user_id)
 
@@ -145,18 +141,19 @@ async def find_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
 
     # Serializar equipos manualmente
-    teams_data = [Team.model_validate(team.__dict__) for team in db_user.teams]
-    teams_created_data = [Team.model_validate(team.__dict__) for team in db_user.teams_created]
+    # teams_data = [Team.model_validate(team.__dict__) for team in db_user.teams]
+    # teams_created_data = [Team.model_validate(team.__dict__) for team in db_user.teams_created]
 
-    # Crear el diccionario con datos serializados
-    user_dict = db_user.__dict__.copy()
-    user_dict["teams"] = teams_data
-    user_dict["teams_created"] = teams_created_data
+    # # Crear el diccionario con datos serializados
+    # user_dict = db_user.__dict__.copy()
+    # user_dict["teams"] = teams_data
+    # user_dict["teams_created"] = teams_created_data
 
     # Validar con Pydantic
-    data_user = UserReturn.model_validate(user_dict)
+    # data_user = UserReturn.model_validate(user_dict)
 
-    return data_user
+    # return data_user
+    return db_user
 
 
 #     return [{"item_id": "Foo", "owner": current_user.email}]
