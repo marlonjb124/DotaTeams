@@ -2,15 +2,15 @@
 from fastapi import APIRouter,Depends, HTTPException, status
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from ..models.user import User as UserModel
-from ..models.rol import Rol as Rol_model
-from ..schemas.rol import Rol as Rol_schema
+from app.models.user import User as UserModel
+from app.models.rol import Rol as Rol_model
+from app.schemas.rol import Rol as Rol_schema
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import jwt
 from passlib.context import CryptContext
-from ..database.database import SessionLocal
-from ..schemas import user_team as userSchema
+from app.database.database import SessionLocal
+from app.schemas import user_team as userSchema
 
 def get_db():
     db = SessionLocal()
@@ -20,7 +20,7 @@ def get_db():
         db.close()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/User/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/Users/token")
 SECRET_KEY = "09d25e095faa6ca2556c818167b7a9563b93f7099f6f0f4caa6cf63b88e8d3e8"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30

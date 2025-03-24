@@ -1,18 +1,18 @@
-from typing import List
-from pydantic import BaseModel
-from ..schemas.rol import Rol,Rol_create
-# from typing import type_check_only
-
-# if type_check_only:
-#     from ..schemas.tournament
+from typing import TYPE_CHECKING,List,ForwardRef
+from pydantic import BaseModel,ConfigDict
+from app.schemas.rol import Rol,Rol_create
+from app.schemas.tournament import Tournament
+# TournamentRef= ForwardRef("Tournament")
 class UserBase(BaseModel):
     email: str
+    # model_config = ConfigDict(arbitrary_types_allowed=True,from_attributes = True)
     class Config:
         from_attributes = True
-
+        
+        
 class UserCreate(UserBase):
     password: str
-    rol:List[Rol_create]=[Rol_create(rol="Guest")]
+    rol:List["Rol_create"]=[Rol_create(rol="Guest")]
     class Config:
         from_attributes = True
 
@@ -22,20 +22,27 @@ class User(UserBase):
     rol:List[Rol]=[]
     class Config:
         from_attributes = True
+class UserReturn(User):
+    teams:list["TeamBase"] = []
+    teams_created:list["TeamBase"] = []
 class TeamBase(BaseModel):
     name: str
     id: int
     description:str|None = None
+    class Config:
+        from_attributes = True
+        # arbitrary_types_allowed = True
+class TeamCreate(BaseModel):
+    name:str
+    description:str
+class TeamReturn(TeamBase):
+    creator: "User"
+    members: List["User"] = []  
+    tournaments:List["Tournament"] =[]
 class Team(TeamBase):
-    creator: User
-    members: List[User] = []  
-    
-class TeamSimple(TeamBase):
     pass
 
-class UserReturn(User):
-    teams:list[TeamBase] = []
-    teams_created:list[TeamBase] = []
+
     # profile:ProfileReturn
 class Member(BaseModel):
     user_id: int
@@ -44,19 +51,12 @@ class Member(BaseModel):
         from_attributes = True
 
 
-
 class Token(BaseModel):
     access_token: str
     token_type: str
 class TokenData(BaseModel):
     username: str | None = None
     
-
-
-
-# class TeamCreate(TeamBase):
-#     creator_id: int
-    # tournaments: List[ForwardRef("Tournament")]s
     class Config:
         from_attributes = True
 
@@ -64,3 +64,4 @@ class TeamUpdateSchema(BaseModel):
     id:int
     name: str|None = None
 
+TeamReturn.model_rebuild()

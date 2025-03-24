@@ -1,7 +1,7 @@
 from sqlalchemy import  ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column,Mapped
-from ..database.database import Base
+from app.database.database import Base
 
 class Profile(Base):
     __tablename__ = "profiles"

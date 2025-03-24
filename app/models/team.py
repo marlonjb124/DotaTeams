@@ -1,9 +1,9 @@
 from sqlalchemy import  ForeignKey, Integer, UniqueConstraint,Column,String
 from sqlalchemy.orm import relationship
 # from sqlalchemy.orm import mapped_column,Mapped
-from ..database.database import Base
-from ..models.tournaments import Tournament
-from ..models.tournaments_teams import TournamentTeam
+from app.database.database import Base
+from app.models.tournaments import Tournament
+from app.models.tournaments_teams import TournamentTeam
 class Team(Base):
     __tablename__ = "teams"
 

@@ -1,30 +1,30 @@
-from typing import Annotated
+from typing import Annotated,List
 from sqlalchemy.exc import IntegrityError
 # from psycopg2.errors import UniqueViolation
 # import sqlalchemy.exc
 from fastapi.responses import HTMLResponse,JSONResponse
 from fastapi import APIRouter,Depends, HTTPException, status
 from datetime import  timedelta
-from ..database.database import SessionLocal
+from app.database.database import SessionLocal
 from sqlalchemy.orm import Session
-from ..models.rol import Rol
-from ..models.user import User as UserModel
-from ..models.user_rol import User_rol
-from ..schemas.user_roles import User_rol as User_rol_schema
-from ..schemas.user_team import UserCreate
-from ..schemas.rol import Rol_create as rol_create_schema
-from ..schemas.user_team import UserReturn
-from ..schemas.user_team import Team
+from app.models.rol import Rol
+from app.models.user import User as UserModel
+from app.schemas.user_roles import User_rol as User_rol_schema
+from app.schemas.user_team import UserCreate
+from app.schemas.rol import Rol as RolSchema,Rol_create as rol_create_schema
+from app.schemas.user_team import UserReturn,TeamReturn,User
 from fastapi.security import  OAuth2PasswordRequestForm
-from ..controllers import userController 
-from ..controllers import profileController
-from ..models.user_rol import User_rol
-from ..schemas import user_team as userSchema
+from app.controllers import userController 
+from app.controllers import profileController
+from app.models.user_rol import User_rol
+from app.schemas import user_team as userSchema
+from app.utils.connection import error_handler
+
 
 
             
 
-userRouter = APIRouter(prefix="/User",tags=["Users"])
+userRouter = APIRouter(prefix="/Users",tags=["Users"])
 def get_db():
     db = SessionLocal()
     try:
@@ -47,7 +47,7 @@ def home()->HTMLResponse:
 
     return HTMLResponse(content=html, status_code=200)
 
-@userRouter.post("/Create_rol")
+@userRouter.post("/Create_rol",response_model=RolSchema)
 async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userController.require_role("just to know Super_admin")),db:Session=Depends(get_db)):
     rol_model = Rol(**rol.model_dump())
     db.add(rol_model)
@@ -56,7 +56,7 @@ async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userControlle
     return rol_model
 
 
-@userRouter.post("/Add_user")
+@userRouter.post("/Add_user",response_model=userSchema.User)
 async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSchema=Depends(userController.require_role("Admin"))):
     passw = user.password
     userModel = UserModel(**user.model_dump(exclude={"rol"}))
@@ -77,7 +77,7 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSche
     db.refresh(userModel)
     # db.refresh(profile)
     # return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)
-    return userSchema.User(**userModel.__dict__)
+    return userModel
     
 @userRouter.post("/token")
 async def login_for_access_token(
@@ -106,22 +106,32 @@ def read_users_me(
    
     return current_user
 @userRouter.post("/Assign_role")
+# @error_handler
 async def assign_role(user_rol:User_rol_schema,current_user:userSchema.User =Depends(userController.require_role("Admin")),db:Session=Depends(get_db)):
-    validate_rol = db.query(Rol).get(user_rol.rol_id)
-   
-    if not validate_rol:
-        raise HTTPException(status_code=404,detail="rol_not_found")
+    print("asdas")
+    validate_rol = db.get(Rol,user_rol.rol_id)
+    valdiate_user= db.get(UserModel,user_rol.user_id)
+    #  db.query(User_rol).filter(User_rol.rol_id==user_rol.rol_id,User_rol.user_id==user_rol.user_id).first()
+    print("rol")
+    # print(validate_rol)
+    if not validate_rol or not valdiate_user:
+        raise HTTPException(status_code=404,detail="User or rol not found")
+    
     try:
         rol_user = User_rol(**user_rol.model_dump())
+        print(rol_user)
         db.add(rol_user)
         rol = db.get(Rol,user_rol.rol_id)   
-        name =rol.rol
+        print(rol)
         db.commit()  
-    except IntegrityError as e :   
-        print(e.instance)
-        print(e._sql_message)
-        print(e.detail)
-        raise HTTPException(detail=f"El usuario ya posee el rol de {name}",status_code=400)
+    except IntegrityError as e :
+        rol = db.get(Rol,user_rol.rol_id)   
+        print(rol)   
+    #     print(e.instance)
+    #     print(e._sql_message)
+    #     print(e.detail)
+    #     # print(e.orig)
+        raise HTTPException(detail=f"El usuario ya posee el rol de {rol.rol}",status_code=400)
     # except Exception as e:
     #     raise HTTPException(detail=e,status_code=400)
     db.refresh(rol_user)
@@ -134,7 +144,7 @@ async def get_roles(db:Session=Depends(get_db)):
     return roles
 
 @userRouter.get("/{user_id}", response_model=UserReturn) 
-async def find_user(user_id: int, db: Session = Depends(get_db)):
+async def find_user(user_id: int, db: Session = Depends(get_db),user:User =Depends(userController.get_current_active_user)):
     db_user = db.get(UserModel, user_id)
 
     if not db_user:
@@ -154,7 +164,10 @@ async def find_user(user_id: int, db: Session = Depends(get_db)):
 
     # return data_user
     return db_user
-
+@userRouter.get("/", response_model=List[UserReturn]) 
+async def get_users( db: Session = Depends(get_db),user:User =Depends(userController.get_current_active_user)):
+    user_list = db.query(UserModel).all()
+    return user_list
 
 #     return [{"item_id": "Foo", "owner": current_user.email}]
 # # profile = db.query(profileModel).filter(profileModel.user_id == user_id).update(**profile.model_dump())

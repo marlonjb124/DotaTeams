@@ -1,13 +1,13 @@
 
 from typing import Annotated
 from fastapi import APIRouter, HTTPException,Depends
-from ..database.database import SessionLocal, engine
-from ..schemas.profile import Profile,ProfileReturn
-from ..models.profile import Profile as profileModel
+from app.database.database import SessionLocal, engine
+from app.schemas.profile import Profile,ProfileReturn
+from app.models.profile import Profile as profileModel
 from sqlalchemy.orm import Session
-from ..models.user import User as UserModel
-from ..schemas.user_team import User as UserSchema
-from ..controllers import userController
+from app.models.user import User as UserModel
+from app.schemas.user_team import User as UserSchema
+from app.controllers import userController
 
 def get_db():
     db = SessionLocal()

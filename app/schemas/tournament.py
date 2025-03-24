@@ -1,8 +1,14 @@
-from typing import List
+from typing import List,TYPE_CHECKING,ForwardRef
 from pydantic import BaseModel
-from ..schemas.user_team import User
-from ..schemas.user_team import Team
+
+
+if TYPE_CHECKING:
+    from app.schemas.user_team import User
+    from app.schemas.user_team import Team
+    
+# UserRef=ForwardRef("User")
 class TournamentBase(BaseModel):
+    id: int
     name: str
     class Config:
         from_attributes = True
@@ -10,17 +16,14 @@ class TournamentBase(BaseModel):
 #     creator_id: int
 
 class Tournament(TournamentBase):
-    id: int
-    creator: User
-    teams_in_t : List[Team] = []
+    creator: "User"
 
-    class Config:
-        from_attributes = True
 class TournamentUpdate(TournamentBase):
-    id:int
     name:str|None=None
     
 class TournamentPublicComplete(TournamentBase):
     id: int
-    creator: User
-    teams_in_t : List[Team] = []
+    creator: "User"
+    teams_in_t : List["Team"] = []
+    
+# TournamentPublicComplete.model_rebuild()
