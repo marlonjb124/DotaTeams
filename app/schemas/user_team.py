@@ -1,13 +1,18 @@
+# from __future__ import annotations
 from typing import TYPE_CHECKING,List,ForwardRef
 from pydantic import BaseModel,ConfigDict
 from app.schemas.rol import Rol,Rol_create
-from app.schemas.tournament import Tournament
+# from app.schemas.tournament import Tournament
+
+    
+
 # TournamentRef= ForwardRef("Tournament")
 class UserBase(BaseModel):
     email: str
     # model_config = ConfigDict(arbitrary_types_allowed=True,from_attributes = True)
     class Config:
         from_attributes = True
+        # arbitrary_types_allowed=True
         
         
 class UserCreate(UserBase):
@@ -36,9 +41,10 @@ class TeamCreate(BaseModel):
     name:str
     description:str
 class TeamReturn(TeamBase):
-    creator: "User"
-    members: List["User"] = []  
+    creator: User
+    members: List[User] = []  
     tournaments:List["Tournament"] =[]
+ 
 class Team(TeamBase):
     pass
 
@@ -49,7 +55,7 @@ class Member(BaseModel):
     team_id:int
     class Config:
         from_attributes = True
-
+        # arbitrary_types_allowed = True
 
 class Token(BaseModel):
     access_token: str
@@ -63,5 +69,6 @@ class TokenData(BaseModel):
 class TeamUpdateSchema(BaseModel):
     id:int
     name: str|None = None
-
-TeamReturn.model_rebuild()
+# if TYPE_CHECKING:
+# from app.schemas.tournament import Tournament
+# TeamReturn.model_rebuild()

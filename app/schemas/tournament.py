@@ -1,29 +1,33 @@
-from typing import List,TYPE_CHECKING,ForwardRef
+# from __future__ import annotations
+from typing import List,TYPE_CHECKING
 from pydantic import BaseModel
 
 
-if TYPE_CHECKING:
-    from app.schemas.user_team import User
-    from app.schemas.user_team import Team
     
-# UserRef=ForwardRef("User")
-class TournamentBase(BaseModel):
-    id: int
+    
+
+class TournamentBase(BaseModel):   
     name: str
+    
     class Config:
         from_attributes = True
-# class TournamentCreate(TournamentBase):
-#     creator_id: int
+        arbitrary_types_allowed = True
+class TournamentCreate(TournamentBase):
+    pass
 
-class Tournament(TournamentBase):
-    creator: "User"
+
 
 class TournamentUpdate(TournamentBase):
+    id:int
     name:str|None=None
     
 class TournamentPublicComplete(TournamentBase):
     id: int
     creator: "User"
     teams_in_t : List["Team"] = []
+class Tournament(TournamentBase):
+    id: int
+    creator: "User"
     
-# TournamentPublicComplete.model_rebuild()
+    
+

@@ -6,6 +6,7 @@ from app.database.database import SessionLocal
 from sqlalchemy.orm import Session
 from app.models.user import User as UserModel
 from app.schemas.user_team import TeamCreate, TeamUpdateSchema,TeamBase,User,Member,TeamReturn
+# from app.schemas.tournament import Tournament
 from app.models.team  import Team
 from app.models.user_team import User_team
 from app.controllers.userController import require_role,get_current_active_user
@@ -17,7 +18,7 @@ from app.controllers.teamController import add_user_to_team
 from datetime import datetime,timedelta
 from typing import Annotated
 
-
+# TeamReturn.model_rebuild()
 teamRouter = APIRouter(prefix="/Teams",tags=["Teams"])
 def get_db():
     db = SessionLocal()
@@ -108,7 +109,7 @@ async def Acept_invitacion(token:str,db:Session =Depends(get_db)):
     if invitacion and invitacion.status == "pendiente" and bool_token:
         # Añade al usuario al equipo
         team = await add_user_to_team(new_member=Member(user_id=invitacion.invited_user_id,team_id=invitacion.team_id),db=db)
-        # esta complejidad no es necesaria,solo fue para poder devovler una JsonResponse manualmente
+        # esta complejidad no es necesaria,solo fue para serializar y poder devovler una JsonResponse manualmente
         # dict=[]
         # for member in members:
         #     member_serialized = User(**member.__dict__)
@@ -123,7 +124,7 @@ async def Acept_invitacion(token:str,db:Session =Depends(get_db)):
     else:
         raise HTTPException(status_code=404, detail="Invitación no válida o expirada")
     
-@teamRouter.delete("/drop_user_from_team/{id_team}/{tarjet_member_id}")
+@teamRouter.delete("/{id_team}/Member/{tarjet_member_id}")
 async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[User, Depends(require_role("Admin"))],db:Session = Depends(get_db)):
     try:
         user_model:UserModel = db.query(UserModel).filter(UserModel.id == user.id).first()
@@ -167,7 +168,7 @@ async def get_teams(user:User=Depends(get_current_active_user),db:Session=Depend
     return teams
 
     
-@teamRouter.patch("/update_team")
+@teamRouter.patch("/")
 async def update_team(teamSchema:TeamUpdateSchema,user:User=Depends(require_role("Admin")),db:Session =Depends(get_db)):
 
     team_to_update=db.get(Team,teamSchema.id)

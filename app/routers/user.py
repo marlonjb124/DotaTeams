@@ -56,7 +56,7 @@ async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userControlle
     return rol_model
 
 
-@userRouter.post("/Add_user",response_model=userSchema.User)
+@userRouter.post("/",response_model=userSchema.User)
 async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSchema=Depends(userController.require_role("Admin"))):
     passw = user.password
     userModel = UserModel(**user.model_dump(exclude={"rol"}))
@@ -138,7 +138,7 @@ async def assign_role(user_rol:User_rol_schema,current_user:userSchema.User =Dep
     print(rol_user)
     return JSONResponse(content="Successfull",status_code=200)
 
-@userRouter.get("/Roles")
+@userRouter.get("/Roles/")
 async def get_roles(db:Session=Depends(get_db)):
     roles=db.query(Rol).all()
     return roles
