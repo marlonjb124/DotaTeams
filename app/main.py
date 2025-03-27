@@ -18,6 +18,9 @@ app.include_router(teamRouter)
 app.include_router(tournament_router)
 # handler = Mangum(app)
 # Base.metadata.create_all(bind=engine)
+@app.add_route("/",methods=["GET"])
+async def Home():
+    return {"message":"Welcome to the API"}
 @app.get("/healthz")
 async def check_health():
     return{"status":"ok"}
