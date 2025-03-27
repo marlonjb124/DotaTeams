@@ -1,9 +1,13 @@
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter,Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+from uuid import uuid4
+import json
+from datetime import datetime,timedelta
+from typing import Annotated
 # from typing import  ForwardRef
 from app.database.database import SessionLocal
-from sqlalchemy.orm import Session
 from app.models.user import User as UserModel
 from app.schemas.user_team import TeamCreate, TeamUpdateSchema,TeamBase,User,Member,TeamReturn
 # from app.schemas.tournament import Tournament
@@ -12,11 +16,8 @@ from app.models.user_team import User_team
 from app.controllers.userController import require_role,get_current_active_user
 from app.schemas.invitacion import InvitacionCreate,InvitacionResponse
 from app.models.invitacion import Invitacion as InvitacionModel
-import json
-from uuid import uuid4
 from app.controllers.teamController import add_user_to_team
-from datetime import datetime,timedelta
-from typing import Annotated
+
 
 # TeamReturn.model_rebuild()
 teamRouter = APIRouter(prefix="/Teams",tags=["Teams"])
@@ -78,33 +79,23 @@ async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depend
 
 
 @teamRouter.post("/Invite_user",description="Invite a user to the team",response_model=InvitacionResponse)
-async def invite_user(invitacion:InvitacionCreate,db: Session =Depends(get_db)):   
+async def invite_user(invitacion:InvitacionCreate,db: Session =Depends(get_db),current_user= Annotated[User,Depends(require_role("Admin"))]):   
     token = str(uuid4())
-    # link = f"https://127.0.0.1:8000/Team/Acept_invitacion/{token}"
     invitacionModel =InvitacionModel(token=token,invited_user_id=invitacion.invited_user_id,team_id=invitacion.team_id)
     db.add(invitacionModel)
     db.commit()
     db.refresh(invitacionModel)
-    # Schemainvitacion = Invitacion_Response(token=invitacionModel.token,team_id=invitacionModel.team_id,invited_user_id=invitacionModel.invited_user_id)
-  
-    # dictInvitacion= Schemainvitacion.model_dump()
-    # response_invitacion ={"Invitacion": dictInvitacion,"link":link}
-    
     return invitacionModel
 
 
 
     # print(teamModel.creator.email)
 @teamRouter.post("/Acept_invitacion/{token}",response_model=list[User])
-async def Acept_invitacion(token:str,db:Session =Depends(get_db)):
+async def Acept_invitacion(token:str,db:Session =Depends(get_db),current_user= Annotated[User,Depends(require_role("Admin"))]):
     invitacion = db.query(InvitacionModel).filter_by(token=token).first()
     now = datetime.now()
     token_time = invitacion.expToken + timedelta(minutes=10)
-    print(invitacion.expToken)
-    print(token_time)
     bool_token = token_time > now
-    print(now)
-    print(bool_token)
     # Si el token es válido y la invitación está pendiente
     if invitacion and invitacion.status == "pendiente" and bool_token:
         # Añade al usuario al equipo
@@ -134,13 +125,11 @@ async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[User, Depe
             raise HTTPException(details="Team not found",status_code=404)
         if not userteam:
                 raise HTTPException(details={"Info": f"User {tarjet_member_id} not found in team {id_team}"},status_code=404)
-        print(user_model.teams_created)
-        print(team_model)
         if not team_model in user_model.teams_created:
             raise HTTPException(status_code=430,detail="Operation not permitted,Not enough permissions(only team's owners are able to delete a member)") 
         db.delete(userteam)
         db.commit()
-        return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"})
+        return JSONResponse(content={"Info": f"Se ha expulsado el usuario{tarjet_member_id}"},status_code=200)
         # for team in user_model.teams_created:
         #     if id_team == team.id:
         #         userteam= db.query(User_team).filter(User_team.user_id==tarjet_member_id).first()

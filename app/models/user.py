@@ -20,9 +20,9 @@ class User(Base):
     # User_T:Mapped["User_team"]=relationship("User_team",back_populates="user")
     # team: Mapped["Team"] = relationship("Team",  back_populates="creator")
 
-# Para lograr esto, puedes utilizar la opción cascade en las relaciones de SQLAlchemy. Esto te permite especificar que ciertas operaciones se “propaguen” desde un objeto padre a sus objetos relacionados. Aquí te muestro cómo podrías hacerlo:
 
-# Python
+
+
 
 # from sqlalchemy import Column, Integer, String, ForeignKey
 # from sqlalchemy.orm import relationship
@@ -43,7 +43,7 @@ class User(Base):
 #     # otros campos...
 
 #     usuario_id = Column(Integer, ForeignKey("users.id"))
-# Código generado por IA. Revisar y usar cuidadosamente. Más información sobre preguntas frecuentes.
+
 # En este código, he añadido cascade="all, delete" a la relación equipos en la clase User. Esto significa que cuando un objeto User sea eliminado, todos los objetos Equipo relacionados también serán eliminados.
 
 # De manera similar, puedes hacer lo mismo para la relación entre equipos y torneos.

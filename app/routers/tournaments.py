@@ -5,18 +5,18 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException,Depends
 from fastapi.responses import JSONResponse,Response
 import sqlalchemy.exc
-from ..database.database import SessionLocal
+from app.database.database import SessionLocal
 from sqlalchemy.orm import Session
-from ..models.user import User as UserModel
-from ..schemas.user_team import User as UserSchema
-from ..controllers import userController
-from ..models.tournaments import Tournament as TournamentModel
-from ..models.tournaments_teams import TournamentTeam
-from ..models.team import Team as Team_Model
-from ..schemas.tournament import TournamentCreate,Tournament, TournamentPublicComplete,TournamentUpdate
-from ..schemas.user_team import Team,TeamBase 
+from app.models.user import User as UserModel
+from app.schemas.user_team import User as UserSchema
+from app.controllers import userController
+from app.models.tournaments import Tournament as TournamentModel
+from app.models.tournaments_teams import TournamentTeam
+from app.models.team import Team as Team_Model
+from app.schemas.tournament import TournamentCreate,Tournament, TournamentPublicComplete,TournamentUpdate
+from app.schemas.user_team import Team,TeamBase 
 # from app.schemas.user_team import User
-from ..schemas.team_tournament import Team_in_T
+from app.schemas.team_tournament import Team_in_T
 # Tournament.model_rebuild()
 # TournamentPublicComplete.model_rebuild()
 # TournamentPublicComplete.model_rebuild()
@@ -102,8 +102,6 @@ async def update_tournament(tournament:TournamentUpdate,user:UserSchema=Depends(
         setattr(tnmt,k,v)
     db.commit()
     db.refresh(tnmt)
-    print(tnmt.__dict__)
-    print(tnmt.creator)
     return tnmt
     # response_tnmt = Tournament.model_validate(tnmt)
     # print(response_tnmt)

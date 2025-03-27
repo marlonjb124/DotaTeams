@@ -19,6 +19,7 @@ from app.controllers import profileController
 from app.models.user_rol import User_rol
 from app.schemas import user_team as userSchema
 from app.utils.connection import error_handler
+from app.models.profile import Profile
 
 
 
@@ -48,7 +49,7 @@ def home()->HTMLResponse:
     return HTMLResponse(content=html, status_code=200)
 
 @userRouter.post("/Create_rol",response_model=RolSchema)
-async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userController.require_role("just to know Super_admin")),db:Session=Depends(get_db)):
+async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userController.require_role("Super_admin")),db:Session=Depends(get_db)):
     rol_model = Rol(**rol.model_dump())
     db.add(rol_model)
     db.commit()
@@ -57,15 +58,16 @@ async def create_rol(rol:rol_create_schema,auth:userSchema=Depends(userControlle
 
 
 @userRouter.post("/",response_model=userSchema.User)
-async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSchema=Depends(userController.require_role("Admin"))):
+async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSchema=Depends(userController.require_role("Super_admin"))):
     passw = user.password
     userModel = UserModel(**user.model_dump(exclude={"rol"}))
     userModel.password= userController.get_password_hash(passw)
     # print(userModel.password)
     db.add(userModel)
     db.commit()
-    profile = profileController.createPerfil(userModel.id)
     db.refresh(userModel)
+    profile = Profile(user_id=userModel.id)
+    
     db.add(profile)
     db.commit()
     rol_guest= db.query(Rol).filter(Rol.rol == user.rol[0].rol).first()
@@ -74,7 +76,6 @@ async def add_user(user: UserCreate, db: Session = Depends(get_db),auth:userSche
     user_rol = User_rol(user_id=userModel.id,rol_id=rol_guest.id)
     db.add(user_rol)
     db.commit()
-    db.refresh(userModel)
     # db.refresh(profile)
     # return userSchema.User(id=userModel.id ,is_active=userModel.is_active ,email=userModel.email)
     return userModel
