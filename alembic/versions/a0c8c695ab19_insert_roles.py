@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from datetime import datetime
 from app.models.rol import Rol
 from app.models.user import User
-from app.models.associations.user_rol import UserRolLink
+from app.models.user_rol import User_rol
 from app.controllers.userController import get_password_hash
 from passlib.context import CryptContext
 import sqlalchemy as sa
@@ -51,7 +51,7 @@ def upgrade():
             session.commit()
 
             # Asignar rol
-            user_rol = UserRolLink(
+            user_rol = User_rol(
                 user_id=admin_user.id,
                 rol_id=admin_rol.id
             )

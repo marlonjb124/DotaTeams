@@ -18,6 +18,8 @@ app.include_router(teamRouter)
 app.include_router(tournament_router)
 # handler = Mangum(app)
 # Base.metadata.create_all(bind=engine)
-
+@app.get("/healthz")
+async def check_health():
+    return{"status":"ok"}
 # if __name__=="__main__" :
 #     uvicorn.run("app.main:app", port=8000, log_level="info")

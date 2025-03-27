@@ -1,6 +1,0 @@
-- name: Run migrations
-  run: |
-    docker run \
-      -e DATABASE_URL=${{ secrets.DATABASE_URL }} \
-      database-1.cbsk28yuwy1o.us-east-2.rds.amazonaws.com
-
