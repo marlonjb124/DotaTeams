@@ -6,3 +6,5 @@
 .vercel
 .alembic.ini
 .alembic/*
+.migrate_lambda.py
+.gitignore

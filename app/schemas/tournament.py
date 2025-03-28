@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 class TournamentBase(BaseModel):   
     name: str
-    
+    description:str
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True

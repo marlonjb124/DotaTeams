@@ -44,13 +44,16 @@ def upgrade() -> None:
     op.create_table('teams',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=True),
+    sa.Column('description', sa.String(), nullable=True),
     sa.Column('creator_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['creator_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
+    op.create_index(op.f('ix_teams_name'), 'teams', ['name'], unique=True)
     op.create_table('tournaments',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('description', sa.String(), nullable=True),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('creator_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['creator_id'], ['users.id'], ),
@@ -100,6 +103,7 @@ def downgrade() -> None:
     op.drop_table('team_members')
     op.drop_table('invitaciones')
     op.drop_table('user_roles')
+    op.drop_index(op.f('ix_teams_name'), table_name='teams')
     op.drop_index(op.f('ix_tournaments_name'), table_name='tournaments')
     op.drop_index(op.f('ix_tournaments_id'), table_name='tournaments')
     op.drop_table('tournaments')

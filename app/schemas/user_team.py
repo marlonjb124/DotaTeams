@@ -2,7 +2,7 @@
 from typing import TYPE_CHECKING,List,ForwardRef
 from pydantic import BaseModel,ConfigDict
 from app.schemas.rol import Rol,Rol_create
-
+# from app.schemas.rol import DefaultRoles
     
 
 
@@ -16,7 +16,7 @@ class UserBase(BaseModel):
         
 class UserCreate(UserBase):
     password: str
-    rol:List["Rol_create"]=[Rol_create(rol="Guest")]
+    # rol:List["Rol_create"]=[Rol_create(rol=DefaultRoles.BASIC_USER_ROL)]
     class Config:
         from_attributes = True
 

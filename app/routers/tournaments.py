@@ -1,4 +1,4 @@
-from turtle import update
+
 import sqlalchemy
 from typing import List
 from typing import Annotated
@@ -15,6 +15,7 @@ from app.models.tournaments_teams import TournamentTeam
 from app.models.team import Team as Team_Model
 from app.schemas.tournament import TournamentCreate,Tournament, TournamentPublicComplete,TournamentUpdate
 from app.schemas.user_team import Team,TeamBase 
+from app.schemas.rol import DefaultRoles
 # from app.schemas.user_team import User
 from app.schemas.team_tournament import Team_in_T
 # Tournament.model_rebuild()
@@ -92,7 +93,7 @@ async def get_tournaments(user:UserSchema=Depends(userController.get_current_act
     # return JSONResponse(content=list,status_code=200)
     return tournaments
 @tournament_router.patch("/",response_model=Tournament)
-async def update_tournament(tournament:TournamentUpdate,user:UserSchema=Depends(userController.require_role('Admin')),db:Session=Depends(get_db)):
+async def update_tournament(tournament:TournamentUpdate,user:UserSchema=Depends(userController.require_role(DefaultRoles.ADMIN_ROL)),db:Session=Depends(get_db)):
     tnmt=db.get(TournamentModel,tournament.id)
     print(tnmt.name)
     if not tnmt:

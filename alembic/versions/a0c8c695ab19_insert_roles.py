@@ -16,15 +16,23 @@ from app.models.user_rol import User_rol
 from app.controllers.userController import get_password_hash
 from passlib.context import CryptContext
 import sqlalchemy as sa
+import os
+from dotenv import load_dotenv
 
-
+load_dotenv()
+email_admin = os.getenv("Super_admin_email")
+psw_admin = os.getenv("Super_admin_psw")
 # revision identifiers, used by Alembic.
 revision: str = 'a0c8c695ab19'
-down_revision: Union[str, None] = '747d59121c3a'
+down_revision: Union[str, None] = '0eb86f2bb935'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+super_admin_rol = Rol(rol="Super_admin")
+admin_rol = Rol(rol="Admin")
+team_gestor_rol = Rol(rol="Team_gestor")
+basic_user_rol = Rol(rol="Basic_user")
 def upgrade():
     # Obtener conexión
     bind = op.get_bind()
@@ -32,18 +40,14 @@ def upgrade():
 
     try:
         # Verificar si ya existen roles
-        if not session.exec(sa.select(Rol).where(Rol.rol == "Super_admin")).first():
+        if not session.exec(sa.select(Rol).where(Rol.rol == super_admin_rol.rol)).first():
             # Crear roles
-            admin_rol = Rol(rol="Super_admin")
-            guest_rol = Rol(rol="Guest")
-            
-            session.add_all([admin_rol, guest_rol])
+            session.add_all([super_admin_rol, admin_rol, team_gestor_rol, basic_user_rol])
             session.commit()
-
-            # Crear usuario admin
-            hashed_pwd = get_password_hash("Super_admin")
+            # Crear usuario super admin
+            hashed_pwd = get_password_hash(psw_admin)
             admin_user = User(
-                email="admin@example.com",
+                email=email_admin,
                 password=hashed_pwd,
                 is_active=True
             )
@@ -93,9 +97,9 @@ def downgrade():
 
     try:
         # Eliminar en orden inverso
-        session.exec(sa.delete(UserRolLink))
-        session.exec(sa.delete(User).where(User.email == "admin@example.com"))
-        session.exec(sa.delete(Rol).where(Rol.rol.in_(["Super_admin", "Guest"])))
+        session.exec(sa.delete(User_rol))
+        session.exec(sa.delete(User).where(User.email == email_admin))
+        session.exec(sa.delete(Rol).where(Rol.rol.in_([super_admin_rol,team_gestor_rol, admin_rol, basic_user_rol])))
         session.commit()
     except Exception as e:
         session.rollback()

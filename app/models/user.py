@@ -4,6 +4,7 @@ from app.database.database import Base
 from app.models.rol import Rol
 from app.models.user_rol import User_rol
 from app.models.invitacion import Invitacion
+# from app.schemas.rol import DefaultRoles
 
 class User(Base):
     __tablename__ = "users"

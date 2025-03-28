@@ -9,13 +9,17 @@ from typing import Annotated
 # from typing import  ForwardRef
 from app.database.database import SessionLocal
 from app.models.user import User as UserModel
+from app.models.user_rol import User_rol
 from app.schemas.user_team import TeamCreate, TeamUpdateSchema,TeamBase,User,Member,TeamReturn
 # from app.schemas.tournament import Tournament
+from app.models.rol import Rol
 from app.models.team  import Team
 from app.models.user_team import User_team
-from app.controllers.userController import require_role,get_current_active_user
+from app.controllers.userController import require_role,get_current_active_user,assign_role
 from app.schemas.invitacion import InvitacionCreate,InvitacionResponse
+from app.schemas.rol import DefaultRoles
 from app.models.invitacion import Invitacion as InvitacionModel
+from app.schemas.user_roles import User_rol
 from app.controllers.teamController import add_user_to_team
 
 
@@ -28,7 +32,7 @@ def get_db():
     finally:
         db.close()
 @teamRouter.post("/",response_model=TeamReturn)
-async def create_team(team: TeamCreate ,user:User=Depends(require_role("Admin")),db: Session = Depends(get_db)):
+async def create_team(team: TeamCreate ,user:User=Depends(require_role(DefaultRoles.BASIC_USER_ROL)),db: Session = Depends(get_db)):
     try:
         session_team = db.query(Team).filter(Team.name == team.name).first()
 
@@ -36,7 +40,7 @@ async def create_team(team: TeamCreate ,user:User=Depends(require_role("Admin"))
         if session_team:
             raise HTTPException(
             status_code=400,
-            detail="The team with this name already exists in the system",
+            detail="A team with this name already exists in the system",
         ) 
         teamModel =Team(**team.model_dump())
         teamModel.creator_id = user.id
@@ -48,6 +52,10 @@ async def create_team(team: TeamCreate ,user:User=Depends(require_role("Admin"))
         print(userteam)
         db.add(userteam)
         db.commit()
+        user_rol_schema = User_rol(rol_id=team_gestor.id,user_id=user.id)
+        team_gestor= db.query(Rol).filter_by(rol=DefaultRoles.TEAM_GESTOR_ROL).first()
+        _=assign_role(user_rol_schema,db=db)
+        
         return teamModel
         # team_schema = TeamReturn(name=teamModel.name,creator=user,id=teamModel.id,members=[])
         # serializable = team_schema.model_dump()
@@ -63,7 +71,7 @@ async def create_team(team: TeamCreate ,user:User=Depends(require_role("Admin"))
    
     
 @teamRouter.delete("/{team_id}",description="Delete a team")
-async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depends(get_current_active_user)):
+async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depends(require_role(DefaultRoles.TEAM_GESTOR_ROL))):
 
     team = db.query(Team).filter(Team.id == team_id).first()
     if not team:
@@ -79,7 +87,7 @@ async def delete_team(team_id:int,db:Session = Depends(get_db),user:User =Depend
 
 
 @teamRouter.post("/Invite_user",description="Invite a user to the team",response_model=InvitacionResponse)
-async def invite_user(invitacion:InvitacionCreate,db: Session =Depends(get_db),current_user= Annotated[User,Depends(require_role("Admin"))]):   
+async def invite_user(invitacion:InvitacionCreate,db: Session =Depends(get_db),_= Annotated[User,Depends(require_role(DefaultRoles.TEAM_GESTOR_ROL))]):   
     token = str(uuid4())
     invitacionModel =InvitacionModel(token=token,invited_user_id=invitacion.invited_user_id,team_id=invitacion.team_id)
     db.add(invitacionModel)
@@ -91,7 +99,7 @@ async def invite_user(invitacion:InvitacionCreate,db: Session =Depends(get_db),c
 
     # print(teamModel.creator.email)
 @teamRouter.post("/Acept_invitacion/{token}",response_model=list[User])
-async def Acept_invitacion(token:str,db:Session =Depends(get_db),current_user= Annotated[User,Depends(require_role("Admin"))]):
+async def Acept_invitacion(token:str,db:Session =Depends(get_db), _= Annotated[User,Depends(require_role(DefaultRoles.BASIC_USER_ROL))]):
     invitacion = db.query(InvitacionModel).filter_by(token=token).first()
     now = datetime.now()
     token_time = invitacion.expToken + timedelta(minutes=10)
@@ -110,13 +118,14 @@ async def Acept_invitacion(token:str,db:Session =Depends(get_db),current_user= A
         # print(member_serialized)
         invitacion.status = "Aceptada"
         db.commit()
+
         # return JSONResponse(content={"Members":dict},status_code=201)
         return team.members
     else:
         raise HTTPException(status_code=404, detail="Invitación no válida o expirada")
     
 @teamRouter.delete("/{id_team}/Member/{tarjet_member_id}")
-async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[User, Depends(require_role("Admin"))],db:Session = Depends(get_db)):
+async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[User, Depends(require_role(DefaultRoles.TEAM_GESTOR_ROL))],db:Session = Depends(get_db)):
     try:
         user_model:UserModel = db.query(UserModel).filter(UserModel.id == user.id).first()
         team_model:Team =db.query(Team).filter(Team.id == id_team).first()
@@ -143,7 +152,7 @@ async def drop_member(tarjet_member_id:int,id_team:int,user:Annotated[User, Depe
     except Exception as e:
         raise e
 @teamRouter.get("/",response_model=list[TeamReturn])
-async def get_teams(user:User=Depends(get_current_active_user),db:Session=Depends(get_db)):
+async def get_teams(db:Session=Depends(get_db)):
     teams = db.query(Team).all()
     print(teams)
     # team_schema = [
@@ -158,7 +167,7 @@ async def get_teams(user:User=Depends(get_current_active_user),db:Session=Depend
 
     
 @teamRouter.patch("/")
-async def update_team(teamSchema:TeamUpdateSchema,user:User=Depends(require_role("Admin")),db:Session =Depends(get_db)):
+async def update_team(teamSchema:TeamUpdateSchema,user:User=Depends(require_role(DefaultRoles.TEAM_GESTOR_ROL)),db:Session =Depends(get_db)):
 
     team_to_update=db.get(Team,teamSchema.id)
     # tournaments = getattr(team_to_update,"tournaments")

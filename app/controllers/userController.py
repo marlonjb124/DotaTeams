@@ -1,17 +1,18 @@
 
 from fastapi import APIRouter,Depends, HTTPException, status
+import jwt
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from passlib.context import CryptContext
+from typing import Annotated
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models.user import User as UserModel
 from app.models.rol import Rol as Rol_model
 from app.schemas.rol import Rol as Rol_schema
-from typing import Annotated
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-import jwt
-from passlib.context import CryptContext
 from app.database.database import SessionLocal
 from app.schemas import user_team as userSchema
-
+# from app.schemas.rol import DefaultRoles
+from app.schemas.user_roles import User_rol as User_rol_schema
 def get_db():
     db = SessionLocal()
     try:
@@ -23,7 +24,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/Users/token")
 SECRET_KEY = "09d25e095faa6ca2556c818167b7a9563b93f7099f6f0f4caa6cf63b88e8d3e8"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 def create_roles(rol:Rol_schema,db:Session=Depends(get_db)):
     model = Rol_model(**rol.model_dump())
     print(model)
@@ -80,6 +81,12 @@ def authenticate_user( email: str, password: str,db: Session = Depends(get_db)):
         return False
     if not verify_password(password, user.password):
         return False
+    # roles=[rol.rol for rol in user.rol]
+    # print(roles)
+    # if DefaultRoles. not in roles:
+    #     user.rol.append()
+    #     db.commit()
+    #     db.refresh(User)
     return user
 
 
@@ -130,9 +137,37 @@ def require_role(required_role:str):
 
         roles = [rol.rol for rol in current_user.rol]    
         print(roles)
-        if "Super_admin" in roles and current_user.email=="Super_admin":
+        if "Super_admin" in roles and current_user.email=="admin@example.com":
             return current_user
         if required_role not in roles:
             raise HTTPException(status_code=403,detail="Operation not permitted,Not enough permissions")     
-        return current_user
-    return role_cheker
+        return  current_user
+    return  role_cheker
+
+def assign_role(user_rol:User_rol_schema,db:Session=Depends(get_db)):
+
+    validate_rol = db.get(Rol,user_rol.rol_id)
+    valdiate_user= db.get(UserModel,user_rol.user_id)
+
+    if not validate_rol or not valdiate_user:
+        raise HTTPException(status_code=404,detail="User or rol not found")
+    
+    try:
+        rol_user = User_rol(**user_rol.model_dump())
+        db.add(rol_user)
+        # rol = db.get(Rol,user_rol.rol_id)                   
+        db.commit()
+        db.refresh(rol_user)
+        return rol_user
+    except IntegrityError as e :
+  
+        # rol = db.get(Rol,user_rol.rol_id)   
+        print(rol)   
+    #     print(e.instance)
+    #     print(e._sql_message)
+    #     print(e.detail)
+    #     # print(e.orig)
+        raise HTTPException(detail=f"User already have this role",status_code=400)
+    # except Exception as e:
+    #     raise HTTPException(detail=e,status_code=400)
+    db.refresh(rol_user)
