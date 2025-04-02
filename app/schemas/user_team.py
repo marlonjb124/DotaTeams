@@ -1,5 +1,6 @@
 
 from typing import TYPE_CHECKING,List,ForwardRef
+from datetime import datetime
 from pydantic import BaseModel,ConfigDict
 from app.schemas.rol import Rol,Rol_create
 # from app.schemas.rol import DefaultRoles
@@ -58,13 +59,18 @@ class Member(BaseModel):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token:str
     token_type: str
-class TokenData(BaseModel):
-    username: str | None = None
-    
-    class Config:
-        from_attributes = True
 
+class TokenPayload(BaseModel):
+    sub: int  # ID del usuario
+    exp: datetime # Tiempo de expiración
+    type: str  # Tipo de token (access o refresh)
+    roles: List[str] = None
+    token: str = None  # Hacer opcional
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 class TeamUpdateSchema(BaseModel):
     id:int
     name: str|None = None

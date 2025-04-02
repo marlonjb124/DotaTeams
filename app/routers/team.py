@@ -52,8 +52,8 @@ async def create_team(team: TeamCreate ,user:User=Depends(require_role(DefaultRo
         print(userteam)
         db.add(userteam)
         db.commit()
-        user_rol_schema = User_rol(rol_id=team_gestor.id,user_id=user.id)
         team_gestor= db.query(Rol).filter_by(rol=DefaultRoles.TEAM_GESTOR_ROL).first()
+        user_rol_schema = User_rol(rol_id=team_gestor.id,user_id=user.id)
         _=assign_role(user_rol_schema,db=db)
         
         return teamModel

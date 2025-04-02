@@ -7,5 +7,6 @@ from app.models.team import Team
 from app.models.tournaments import Tournament
 from app.models.tournaments_teams import TournamentTeam
 from app.models.user_team import User_team
+from app.models.refresh_token import RefreshToken
 
-__all__ = ["User", "Rol", "User_rol", "Invitacion","Profile","Team","TournamentTeam","Tournament","User_team"]
+__all__ = ["User", "Rol", "User_rol", "Invitacion","Profile","Team","TournamentTeam","Tournament","User_team","RefreshToken"]

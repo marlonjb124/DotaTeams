@@ -17,6 +17,7 @@ class User(Base):
     teams_created = relationship("Team", back_populates="creator",lazy="joined")
     teams = relationship("Team", secondary="team_members",back_populates="members",lazy="joined")
     tournaments_created= relationship("Tournament",back_populates="creator")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     rol=relationship("Rol",secondary="user_roles",back_populates="useRol",lazy="joined")
     # User_T:Mapped["User_team"]=relationship("User_team",back_populates="user")
     # team: Mapped["Team"] = relationship("Team",  back_populates="creator")

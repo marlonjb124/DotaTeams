@@ -57,7 +57,7 @@ def upgrade():
             # Asignar rol
             user_rol = User_rol(
                 user_id=admin_user.id,
-                rol_id=admin_rol.id
+                rol_id=super_admin_rol.id
             )
             session.add(user_rol)
             session.commit()
