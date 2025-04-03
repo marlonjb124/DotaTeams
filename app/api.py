@@ -43,7 +43,7 @@ async def Home():
 async def check_health():
     return{"status":"ok"}
 
-@app.get("/webhook-test")
+@app.post("/webhook-test")
 async def wh(request:Request):
     print(request.body)
     print(request.headers)
