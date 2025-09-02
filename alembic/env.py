@@ -32,7 +32,7 @@ print(Base.metadata.tables.keys())
 # target_metadata = None
 
 # Sobrescribir la URL de la base de datos con la del archivo .env
-url = os.getenv("LOCAL_DATABASE_URL")
+url = os.getenv("DATABASE_URL")
 if url:
     config.set_main_option("sqlalchemy.url", url)
 

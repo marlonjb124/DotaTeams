@@ -1,8 +1,9 @@
 
-from fastapi import APIRouter,Depends, HTTPException, status
+from fastapi import APIRouter,Depends, HTTPException, status,Request
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 import jwt
+import hashlib
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from typing import Annotated,Dict,Any
@@ -12,6 +13,7 @@ from uuid import UUID, uuid4
 from app.models.refresh_token import RefreshToken
 from app.models.user import User as UserModel
 from app.models.rol import Rol as Rol_model
+from app.models.user_rol import User_rol as User_rol_model
 from app.schemas.rol import Rol as Rol_schema
 from app.database.database import SessionLocal
 from app.schemas import user_team as userSchema
@@ -25,7 +27,7 @@ def get_db():
         db.close()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/Users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/auth/login")
 SECRET_KEY = "09d25e095faa6ca2556c818167b7a9563b93f7099f6f0f4caa6cf63b88e8d3e8"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -173,19 +175,30 @@ def revoke_refresh_token(db:Session, token: str) -> bool:
     return True   
     
 
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+def get_current_user(request:Request,token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    print(request.cookies.items())
+    print(request.cookies.values())
+    print(request.cookies.keys())
+    fingerprint = request.cookies.get("__Secure-Fgp")
+    print(fingerprint)
+    if not fingerprint:
+        raise HTTPException(status_code=401, detail="Fingerprint requerido")
     try:
         payload = jwt.decode(
             token, SECRET_KEY, algorithms=[ALGORITHM]
         )
         print("payload")
         print(payload)
-
+        fingerprint_hash = hashlib.sha256(fingerprint.encode()).hexdigest()
+        
+        # 5. Validar coincidencia
+        if payload.get("user_fingerprint") != fingerprint_hash:
+            raise HTTPException(status_code=401, detail="Fingerprint inválido")
         token_data = userSchema.TokenPayload(**payload)
         print(token_data)
         
@@ -241,7 +254,7 @@ def assign_role(user_rol:User_rol_schema,db:Session=Depends(get_db)):
         raise HTTPException(status_code=404,detail="User or rol not found")
     
     try:
-        rol_user = User_rol(**user_rol.model_dump())
+        rol_user = User_rol_model(**user_rol.model_dump())
         db.add(rol_user)
         # rol = db.get(Rol,user_rol.rol_id)                   
         db.commit()

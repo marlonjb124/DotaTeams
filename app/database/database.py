@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = os.getenv("LOCAL_DATABASE_URL")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -21,8 +21,8 @@ def get_db():
     finally:
         db.close()
 
-
-
+db= Session()
+# db.query(Human).execution_options(skip_visibility_filter=True).all()
 # # engine = create_engine(DATABASE_URL)
 # # SessionLocal = sessionmaker(bind=engine)
 
